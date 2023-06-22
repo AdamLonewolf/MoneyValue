@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use Exception;
+use App\Models\Requests;
 use Illuminate\Http\Request;
 use App\Models\Convert_table;
 use App\Http\Controllers\Controller;
@@ -45,9 +46,24 @@ class ConvertController extends Controller
 
            $quantity = $request->input('quantity');
            $amount = $quantity * $convert_rate;
+           $convert->save(); //On enregistre les modifications
            
-           $convert->request_count++; //Mise à jour du compteur de requêtes
-           $convert->save(); //On enregistre les modifications 
+           //On crée une requête pour la paire de conversion sélectionnée
+
+            $pairRequest = Requests::where('pair_id', $id)->first(); //on recherche une requête existante pour la paire 
+            if($pairRequest){
+                //si elle existe, on incrémente le compteur de la requête existante
+                $pairRequest->request_count++; 
+                $pairRequest->save();
+            } else {
+                //si elle n'existe pas, on en crée une
+                $pairRequest = new Requests();
+                $pairRequest->pair_id = $id; //On lie l'id de la paire actuelle à la clé étrangère
+                $pairRequest->request_count++; //on incrémente le nombre de requêtes de la paire
+                $pairRequest->save();
+            }
+
+           
 
            //On retourne le montant sous format json 
            return response()->json([

@@ -29,12 +29,10 @@ class ConvertSeeder extends Seeder
         foreach($pairs as $p){
             $convert = new Convert_table();
             $convert_rate = round(mt_rand(1, 160) / 100, 2); //Taux de conversion arrondi à 2 chiffres après la virgule
-            $request_nbr = 0; //nombre de requêtes par défaut
 
             $convert->from_currency_id = $p[0]->id; 
             $convert->to_currency_id = $p[1]->id;
             $convert->convert_rate = $convert_rate;
-            $convert->request_count = $request_nbr;
             $convert->save();
 
         }

@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('convert_tables', function (Blueprint $table) {
+        Schema::create('requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('from_currency_id')->references('id')->on('currencies')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreignId('to_currency_id')->references('id')->on('currencies')->onDelete('cascade')->onUpdate('cascade');
-            $table->float('convert_rate');
+            $table->foreignId('pair_id')->references('id')->on('convert_tables')->onDelete('cascade')->onUpdate('cascade');
+            $table->integer('request_count')->default(0);
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('convert_tables');
+        Schema::dropIfExists('requests');
     }
 };
