@@ -1,15 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\ConvertController;
-use App\Models\Convert_table;
 use Illuminate\Http\Request;
+use App\Models\Convert_table;
 use Illuminate\Support\Facades\Route;
-
 use function PHPUnit\Framework\isEmpty;
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ConvertController;
 
 //Vérification du serveur de l'api (voir s'il est fonctionnel)
 
@@ -54,3 +50,14 @@ Route::delete('/pairs/edit/{id}', [ConvertController::class, 'update']);
     //Route pour supprimer une paire de conversion 
 
 Route::delete('/pairs/delete/{id}', [ConvertController::class, 'destroy']);
+
+
+//---Authentification--z--
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+    //Connexion de l'admin
+
+    Route::post('/users/login', [AuthController::class, 'login']);

@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('user_email')->unique();
-            $table->string('user_password');
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
             $table->foreignId('role_id')->references('id')->on('roles')->onDelete('cascade')->onUpdate('cascade');
             $table->rememberToken();
             $table->timestamps();
