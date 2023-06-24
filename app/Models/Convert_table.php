@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Currency;
 use App\Models\Requests;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,11 +23,11 @@ class Convert_table extends Model
     //J'établis une relation entre la table convert_table et son parent currencies
 
     public function fromCurrency(){
-        return $this->belongsTo(Currencies::class, 'from_currency_id');
+        return $this->belongsTo(Currency::class);
     }
 
     public function toCurrency(){
-        return $this->belongsTo(Currencies::class, 'to_currency_id');
+        return $this->belongsTo(Currency::class);
     }
 
     //relation  entre la table convert_tables et la table requests

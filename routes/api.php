@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Route;
 use function PHPUnit\Framework\isEmpty;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConvertController;
+use App\Http\Controllers\Api\CurrencyController;
+
+
+//----Routes définies pour l'utilisateur (publiques)---------
 
 //Vérification du serveur de l'api (voir s'il est fonctionnel)
 
@@ -29,6 +33,10 @@ Route::get('/test', function(){
     }
 });
 
+//Route pour récupérer la liste des devises 
+
+Route::get('/currencies/list', [CurrencyController::class, 'index']);
+
 //Route pour récupérer la liste des paires de conversion 
 
 Route::get('/pairs/list', [ConvertController::class, 'index']);
@@ -36,6 +44,10 @@ Route::get('/pairs/list', [ConvertController::class, 'index']);
 //Route qui permettra de convertir une quantité de devise suivant une paire existante
 
 Route::post('/convert/{id}', [ConvertController::class, 'convert']);
+
+
+
+//----Routes définies pour l'administrateur (privées)---
 
 //CRUD pour l'administrateur
 

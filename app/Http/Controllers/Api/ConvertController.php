@@ -7,6 +7,7 @@ use App\Models\Requests;
 use Illuminate\Http\Request;
 use App\Models\Convert_table;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PairRessource;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -23,7 +24,7 @@ class ConvertController extends Controller
             return response()->json([
                 'status' => "OK",
                 'message' => 'Liste des posts',
-                'data' => Convert_table::all()
+                'data' => PairRessource::collection(Convert_table::all())//On chaque objet de la collection en un tableau JSON
             ]);
         } catch (Exception $e) {
             return response()->json($e);
