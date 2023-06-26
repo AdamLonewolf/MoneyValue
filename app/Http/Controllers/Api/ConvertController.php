@@ -23,7 +23,7 @@ class ConvertController extends Controller
         try{
             return response()->json([
                 'status' => "OK",
-                'message' => 'Liste des posts',
+                'message' => 'Liste des paires',
                 'data' => PairRessource::collection(Convert_table::all())//On chaque objet de la collection en un tableau JSON
             ]);
         } catch (Exception $e) {
@@ -88,11 +88,11 @@ class ConvertController extends Controller
 
         try{
             //On vérifie les informations avant de créer notre paire
-         Validator::extend('unique_currency_pair', function(Request $request, $parameters)
+         Validator::extend('unique_currency_pair', function(Request $request)
          {
              //On récupère les valeurs des id de chaque monnaie de la paire.
-             $fromCurrencyId = $request->input($parameters[0]);
-             $toCurrencyId = $request->input($parameters[1]);
+             $fromCurrencyId = $request->input('from_currency_id');
+             $toCurrencyId = $request->input('to_currency_id');
  
              //On vérifie à présent si la combinaison de ces deux paires existe déjà dans la table.
  
@@ -117,7 +117,7 @@ class ConvertController extends Controller
          return response()->json(
              [
                  'status' => "OK",
-                 'message' => "Votre paire a été enregistrée avec"
+                 'message' => "Votre paire a été enregistrée avec succès"
              ]
          );
     }
@@ -141,11 +141,11 @@ class ConvertController extends Controller
         try{
 
             //On vérifie les informations avant de créer notre paire
-         Validator::extend('unique_currency_pair', function(Request $request, $parameters)
+         Validator::extend('unique_currency_pair', function(Request $request)
          {
              //On récupère les valeurs des id de chaque monnaie de la paire.
-             $fromCurrencyId = $request->input($parameters[0]);
-             $toCurrencyId = $request->input($parameters[1]);
+             $fromCurrencyId = $request->input('from_currency_id');
+             $toCurrencyId = $request->input('to_currency_id');
  
              //On vérifie à présent si la combinaison de ces deux paires existe déjà dans la table.
  

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use Exception;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -33,11 +35,12 @@ class AuthController extends Controller
         if(Auth::attempt($credentials)){
             $user = Auth::user();
 
-            //Je fais un token pour l'administrateur 
+            //Je fais un token pour l'administrateur (qui expire dans 10 heures)
             //Si $user est une instance du modèle user
-            if ($user instanceof \App\Models\User) {
-                $token = $user->createToken('my_admin_token')->plainTextToken;
-                // Autres actions à effectuer avec le token
+            if ($user instanceof User) {
+                $token = $user->createToken("user_token",  ['*'], now()->addHours(10))->plainTextToken;
+                $user->token = $token; //On stocke le token dans la table.
+                $user->save();
             } 
 
             if($user->role_id == 1){
@@ -55,6 +58,26 @@ class AuthController extends Controller
             return response()->json([
                 "status"=>'Error',
                 "message"=>"Vos informations sont incorrectes."
+            ]);
+        }
+    }
+
+
+    //Fonction pour déconnecter l'utilisateur
+
+    public function logout($id){
+        try{
+            $user = User::findOrfail($id); //On recherche l'id de l'admin
+            $user->tokens()->delete(); //on supprime tous les tokens de l'utilisateur.
+            return response()->json([
+                "status"=> 'OK',
+                "message"=> "Vous avez été déconnecté avec succès"
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                "status"=> 'Error',
+                "message"=> "Une erreur est survenue.",
+                "error" => $e
             ]);
         }
     }

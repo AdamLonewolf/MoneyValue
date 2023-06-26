@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Convert_table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Requests extends Model
 {
@@ -17,7 +17,7 @@ class Requests extends Model
     //relation entre la table des requêtes et la table des conversions
     public function pair()
     {
-        return $this->belongsTo(Convert::class);
+        return $this->belongsTo(Convert_table::class);
     }
 
     
