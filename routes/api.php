@@ -8,9 +8,8 @@ use function PHPUnit\Framework\isEmpty;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConvertController;
 use App\Http\Controllers\Api\CurrencyController;
-
-
-
+use App\Http\Resources\CurrencyRessource;
+use App\Models\Currency;
 
 //Vérification du serveur de l'api (voir s'il est fonctionnel)
 
@@ -35,6 +34,10 @@ Route::get('/test', function(){
 });
 
 //----Partie publique (paires)---------
+
+//Route pour récupérer la liste des paires de devises paginées
+
+Route::get('/pairs/list/{page}', [ConvertController::class, 'paginatePair']);
 
 //Route pour récupérer la liste des paires de devises
 
@@ -63,13 +66,29 @@ Route::post('/convert/{id}', [ConvertController::class, 'convert']);
 
 //---Partie publique (Devises)---
 
-//Route pour récupérer la liste des devises 
+//Route pour récupérer la liste des devises paginées
+
+Route::get('/currencies/list/{page}', [CurrencyController::class, 'paginateCurrency']);
+
+//Route pour récupérer la liste des devises
 
 Route::get('/currencies/list', [CurrencyController::class, 'index']);
 
+//Route pour récupérer les informations d'une devise
 
 
-
+Route::get('/currencies/{id}', function($id){
+    $currency = Currency::find($id); //On cherche la devise à partir de l'id 
+    //Si elle n'est pas trouvée, on retourne une erreur 
+    if (!$currency) {
+        return response()->json([
+            'status' => 'Error',
+            'message' => 'Paire non trouvée',
+        ]);
+    }
+    //si elle est trouvée, on renvoie ses données
+    return new CurrencyRessource($currency); 
+});
 
 //----Routes définies pour l'administrateur (privées)---
 

@@ -12,21 +12,50 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CurrencyController extends Controller
 {
-    /**
-     * Retourne la liste des monnaies
-     */
-    public function index()
-    {
-          
+
+
+    public function index(){
         try{
             return response()->json([
                 'status' => "OK",
                 'message' => 'Liste des devises',
-                'data' => CurrencyRessource::collection(Currency::all()) //On chaque objet de la collection en un tableau JSON
+                'data' => CurrencyRessource::collection(Currency::all()),
+                 //On chaque objet de la collection en un tableau JSON
+    
             ]);
         } catch (Exception $e) {
             return response()->json($e);
         }
+    }
+
+    /**
+     * Retourne la liste des devises paginées
+     */
+    public function PaginateCurrency($page)
+    {   
+        try {
+        $perPage = 10; // Nombre d'éléments par page
+    
+            // Compter le nombre total de pages
+            $totalCount = Currency::count(); //on compte tous les enregistrements de la table Currency
+            $totalPage = ceil($totalCount / $perPage);
+
+            // Calculer l'offset
+            $offset = ($page - 1) * $perPage;
+
+            // Récupérer les éléments paginés de la table
+            $currency = Currency::skip($offset)->take($perPage)->get();
+
+            return response()->json([
+                'status' => "OK",
+                'message' => 'Liste des devises',
+                'data' => CurrencyRessource::collection($currency),
+                'totalPage' => $totalPage
+            ]);
+        } catch (Exception $e) {
+            return response()->json($e);
+        }
+
     }
 
 
@@ -35,42 +64,37 @@ class CurrencyController extends Controller
      */
     public function store(Request $request)
     {
-        try{
-            //On vérifie les informations avant de créer une nouvelle devise
-         Validator::extend('unique_currency', function(Request $request)
-         {
-             //On récupère les informations dans le formulaire (nom et code de la devise)
-             $CurrencyCode = $request->input('currency_code');
-             $CurrencyName = $request->input('currency_name');
- 
-             //On vérifie à présent si la devise existe déjà dans la table.
- 
-             $exists = Currency::where('currency_code', $CurrencyCode) 
-                                         ->where('currency_name', $CurrencyName)
-                                         ->exists(); //retourne true si on trouve une devise
-             return !$exists; //Si exists() retourne true, !$existe retourne false ce qui bloquera la validation des données.
-         });
-       
-         
-         $newCurrency = Currency::create([
-             'currency_code' => $request->currency_code, //Récupère le code de la devise
-             'currency_name' => $request->currency_name, //Récupère le nom de la devise
-         ]);
-         
-         //Si la création de la devise a été effectuée, alors on envoie une réponse de succès 
+        $validatedData = $request->validate([
+            'currency_code' => 'required',
+            'currency_name' => 'required'
+        ]);
 
-          if($newCurrency){
-         return response()->json(
-             [
-                 'status' => "OK",
-                 'message' => "Votre devise a été enregistrée avec succès"
-             ]
-         );
-    }
-        } catch(Exception $e) {
+        try {
+            $exists = Currency::where('currency_code', $validatedData['currency_code'])
+                ->where('currency_name', $validatedData['currency_name'])
+                ->exists();
+    
+            if ($exists) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'message' => 'Une devise avec le même code et le même nom existe déjà'
+                ]);
+            }
+    
+            $newCurrency = Currency::create([
+                'currency_code' => $validatedData['currency_code'],
+                'currency_name' => $validatedData['currency_name'],
+            ]);
+    
+            if ($newCurrency) {
+                return response()->json([
+                    'status' => 'OK',
+                    'message' => 'Votre devise a été enregistrée avec succès'
+                ]);
+            }
+        } catch (Exception $e) {
             return response()->json($e);
         }
-
         
     }
 
@@ -79,42 +103,36 @@ class CurrencyController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        try{
-            //On vérifie les informations avant de créer une nouvelle devise
-         Validator::extend('unique_currency', function(Request $request)
-         {
-             //On récupère les informations dans le formulaire (nom et code de la devise)
-             $CurrencyCode = $request->input('currency_code');
-             $CurrencyName = $request->input('currency_name');
- 
-             //On vérifie à présent si la devise existe déjà dans la table.
- 
-             $exists = Currency::where('currency_code', $CurrencyCode) 
-                                         ->where('currency_name', $CurrencyName)
-                                         ->exists(); //retourne true si on trouve une devise
-             return !$exists; //Si exists() retourne true, !$existe retourne false ce qui bloquera la validation des données.
-         });
-       
-         $editCurrency = Currency::findOrfail($id); //On récupère l'id de la devise et on la cherche dans la table currency
+        $validatedData = $request->validate([
+            'currency_code' => 'required',
+            'currency_name' => 'required'
+        ]);
 
-         //On met à jour les informations de la devise selectionnée
-
-         $editCurrency->update([
-             'currency_code' => $request->currency_code, //Récupère le code de la devise
-             'currency_name' => $request->currency_name, //Récupère le nom de la devise
-         ]);
-         
-         //Si la création de la devise a été effectuée, alors on envoie une réponse de succès 
-
-          if($editCurrency){
-         return response()->json(
-             [
-                 'status' => "OK",
-                 'message' => "Votre devise a été modifiée avec succès"
-             ]
-         );
-    }
-        } catch(Exception $e) {
+        try {
+            $exists = Currency::where('currency_code', $validatedData['currency_code'])
+                ->where('currency_name', $validatedData['currency_name'])
+                ->exists();
+    
+            if ($exists) {
+                return response()->json([
+                    'status' => 'Error',
+                    'message' => 'Une devise avec le même code et le même nom existe déjà'
+                ]);
+            }
+            
+            $editCurrency = Currency::findOrfail($id);
+            $editCurrency->update([
+                'currency_code' => $validatedData['currency_code'],
+                'currency_name' => $validatedData['currency_name'],
+            ]);
+    
+            if ($editCurrency) {
+                return response()->json([
+                    'status' => 'OK',
+                    'message' => 'Votre devise a été enregistrée avec succès'
+                ]);
+            }
+        } catch (Exception $e) {
             return response()->json($e);
         }
     }

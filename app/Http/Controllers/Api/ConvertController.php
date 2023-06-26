@@ -13,18 +13,51 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ConvertController extends Controller
 {
+
+
+
     /**
-     * Retourne la liste des paires supportées
+     * retourne la liste des paires
      */
-    public function index()
-    {
-        //Quand la requête est lancée, on essaie de retourner une réponse en json contenant la liste des paires si c'est un succès, sinon on retourne une erreur 
-        
+
+     public function index(){
         try{
+    
             return response()->json([
                 'status' => "OK",
                 'message' => 'Liste des paires',
-                'data' => PairRessource::collection(Convert_table::all())//On chaque objet de la collection en un tableau JSON
+                'data' => PairRessource::collection(Convert_table::all()),//On récupère la liste paginée des élements de notre tableau.
+
+            ]);
+        } catch (Exception $e) {
+            return response()->json($e);
+        }
+     }
+
+
+    /**
+     * Retourne la liste des paires paginées
+     */
+    public function paginatePair($page)
+    {
+        try {
+            $perPage = 10; // Nombre d'éléments par page
+    
+            // Compter le nombre total de pages
+            $totalCount = Convert_table::count(); //on compte tous les enregistrements de la table Convert
+            $totalPage = ceil($totalCount / $perPage);
+    
+            // Calculer l'offset
+            $offset = ($page - 1) * $perPage;
+    
+            // Récupérer les éléments paginés de la table
+            $pairs = Convert_table::skip($offset)->take($perPage)->get();
+    
+            return response()->json([
+                'status' => "OK",
+                'message' => 'Liste des paires',
+                'data' => PairRessource::collection($pairs),
+                'totalPage' => $totalPage
             ]);
         } catch (Exception $e) {
             return response()->json($e);
@@ -85,49 +118,44 @@ class ConvertController extends Controller
      */
     public function store(Request $request)
     {
+//On récupère les informations du formulaire passées par la requête.
+$validatedData = $request->validate([
+    'from_currency_id' => 'required',
+    'to_currency_id' => 'required',
+    'convert_rate' => 'required',
+]);
 
-        try{
-            //On vérifie les informations avant de créer notre paire
-         Validator::extend('unique_currency_pair', function(Request $request)
-         {
-             //On récupère les valeurs des id de chaque monnaie de la paire.
-             $fromCurrencyId = $request->input('from_currency_id');
-             $toCurrencyId = $request->input('to_currency_id');
- 
-             //On vérifie à présent si la combinaison de ces deux paires existe déjà dans la table.
- 
-             $exists = Convert_table::where('from_currency_id', $fromCurrencyId) 
-                                         ->where('to_currency_id', $toCurrencyId)
-                                         ->exists(); //retourne true si une combinaison est trouvée, et false si non.
-             return !$exists; //Si exists() retourne true, !$existe retourne false ce qui bloquera la validation des données.
-             
-         });
-       
-         
-         $newPair = Convert_table::create([
-             'from_currency_id' => $request->from_currency_id, //Récupère l'id de la monnaie source
-             'to_currency_id' => $request->to_currency_id, //Récupère l'id de la monnaie cible
-             'convert_rate' => $request->convert_rate, // Récupère la valeur du taux de change
-             'request_count' => 0, // Compteur initialisé à 0
-         ]);
-         
-         //Si la création de la paire a été effectuée, alors on envoie une réponse de succès 
-
-          if($newPair){
-         return response()->json(
-             [
-                 'status' => "OK",
-                 'message' => "Votre paire a été enregistrée avec succès"
-             ]
-         );
-    }
-        } catch(Exception $e) {
-            return response()->json($e);
-        }
-
+try {
+        //On cherche dans la table si une paire identique existe déjà
+        $exists = Convert_table::where('from_currency_id', $validatedData['from_currency_id'])
+            ->where('to_currency_id', $validatedData['to_currency_id'])
+            ->exists();
         
+            //si oui, on retourne une erreur
+        if ($exists) {
+            return response()->json([
+                'status' => 'Error',
+                'message' => 'Une paire avec les mêmes données existe déjà'
+            ]);
+        }
+        
+        //Si non, On crée une nouvelle paire
 
+        $newPair = Convert_table::create([
+            'from_currency_id' => $validatedData['from_currency_id'],
+            'to_currency_id' => $validatedData['to_currency_id'],
+            'convert_rate' => $validatedData['convert_rate'],
+        ]);
 
+        if ($newPair) {
+            return response()->json([
+                'status' => 'OK',
+                'message' => 'Votre devise a été enregistrée avec succès'
+            ]);
+        }
+    } catch (Exception $e) {
+        return response()->json($e);
+    }
 
     }
 
@@ -138,42 +166,43 @@ class ConvertController extends Controller
 
     public function update(Request $request, $id)
     {
-        try{
+        //On récupère les informations du formulaire passées par la requête.
+        $validatedData = $request->validate([
+            'from_currency_id' => 'required',
+            'to_currency_id' => 'required',
+            'convert_rate' => 'required',
+        ]);
 
-            //On vérifie les informations avant de créer notre paire
-         Validator::extend('unique_currency_pair', function(Request $request)
-         {
-             //On récupère les valeurs des id de chaque monnaie de la paire.
-             $fromCurrencyId = $request->input('from_currency_id');
-             $toCurrencyId = $request->input('to_currency_id');
- 
-             //On vérifie à présent si la combinaison de ces deux paires existe déjà dans la table.
- 
-             $exists = Convert_table::where('from_currency_id', $fromCurrencyId) 
-                                         ->where('to_currency_id', $toCurrencyId)
-                                         ->exists(); //retourne true si une combinaison est trouvée, et false si non.
-             return !$exists; //Si exists() retourne true, !$existe retourne false ce qui bloquera la validation des données.
-             
-         });
-       
-         $editPair = Convert_table::findOrfail($id); //On recherche l'id de la paire selectionnée
-         $editPair->update([
-             'from_currency_id' => $request->from_currency_id, //Récupère l'id de la monnaie source
-             'to_currency_id' => $request->to_currency_id, //Récupère l'id de la monnaie cible
-             'convert_rate' => $request->convert_rate, // Récupère la valeur du taux de change
-         ]);
- 
-         //Si la mise à jour des données a été effectuée, alors on envoie une réponse de succès
-
-          if($editPair){
-         return response()->json(
-             [
-                 'status' => "OK",
-                 'message' => "Votre paire a été modifiée avec succès"
-             ]
-         );
-    }
-        } catch(Exception $e) {
+        try {
+            //On cherche dans la table si une paire identique existe déjà
+            $exists = Convert_table::where('from_currency_id', $validatedData['from_currency_id'])
+                ->where('to_currency_id', $validatedData['to_currency_id'])
+                ->where('convert_rate', $validatedData['convert_rate'])
+                ->exists();
+            
+                //si oui, on retourne une erreur
+            if ($exists) {
+                return response()->json([
+                    'status' => 'Error',
+                    'message' => 'Une paire avec les mêmes données existe déjà'
+                ]);
+            }
+            
+            //Si non, On récupère l'id de cette paire et on la met à jour.
+            $editPair = Convert_table::findOrfail($id);
+            $editPair->update([
+                'from_currency_id' => $validatedData['from_currency_id'],
+                'to_currency_id' => $validatedData['to_currency_id'],
+                'convert_rate' => $validatedData['convert_rate'],
+            ]);
+    
+            if ($editPair) {
+                return response()->json([
+                    'status' => 'OK',
+                    'message' => 'Votre devise a été enregistrée avec succès'
+                ]);
+            }
+        } catch (Exception $e) {
             return response()->json($e);
         }
     }
